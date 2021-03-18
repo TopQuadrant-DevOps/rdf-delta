@@ -23,6 +23,7 @@ import org.apache.zookeeper.*;
 import org.seaborne.delta.DeltaException;
 import org.seaborne.delta.lib.JSONX;
 import org.seaborne.delta.zk.ZkConnection;
+import org.seaborne.delta.zk.ZkException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,23 +31,40 @@ import java.io.IOException;
 import java.util.List;
 import java.util.function.Supplier;
 
-public final class DirectZkConnection implements ZkConnection {
+public final class DirectZkConnection implements ZkConnection, Watcher {
     private static final Logger LOG = LoggerFactory.getLogger(DirectZkConnection.class);
 
     private final ZooKeeper client;
     private final DirectZkLockFactory lockFactory;
 
-    public static DirectZkConnection connect(final String connectString) throws IOException {
+    public static DirectZkConnection connect(final String connectString) throws IOException, KeeperException, InterruptedException {
         return new DirectZkConnection(
-            new ZooKeeper(connectString, 10_000, watchedEvent -> {
-                // nop
-            })
+            new ZooKeeper(
+                connectString,
+                10_000,
+                watchedEvent -> {/*nop*/}
+            )
         );
     }
 
-    private DirectZkConnection(final ZooKeeper client) {
+    private DirectZkConnection(final ZooKeeper client) throws InterruptedException, IOException, KeeperException {
         this.client = client;
         this.lockFactory = new DirectZkLockFactory(client);
+        this.updateConfig();
+    }
+
+    private void updateConfig() throws KeeperException, InterruptedException, IOException {
+        this.client.updateServerList(
+            new String(
+                this.client.getConfig(
+                    this,
+                    this.client.exists(
+                        ZooDefs.CONFIG_NODE,
+                        false
+                    )
+                )
+            )
+        );
     }
 
     @Override
@@ -172,5 +190,18 @@ public final class DirectZkConnection implements ZkConnection {
     @Override
     public void close() throws Exception {
         this.client.close();
+    }
+
+    @Override
+    public void process(final WatchedEvent event) {
+        if (event.getType() == Event.EventType.NodeDataChanged) {
+            try {
+                this.updateConfig();
+            } catch (final KeeperException | InterruptedException e) {
+                LOG.error("Failure retrieving the updated ZooKeeper config.", e);
+            } catch (IOException e) {
+                throw new ZkException("Failure updating the ZooKeeper config.", e);
+            }
+        }
     }
 }
