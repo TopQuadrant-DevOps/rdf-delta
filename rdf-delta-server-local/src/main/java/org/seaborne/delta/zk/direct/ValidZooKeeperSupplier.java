@@ -107,17 +107,16 @@ public final class ValidZooKeeperSupplier implements Supplier<ZooKeeper>, Watche
     }
 
     private void updateConfig() throws KeeperException, InterruptedException, IOException {
-        this.get().updateServerList(
-            new String(
-                this.get().getConfig(
-                    this,
-                    this.get().exists(
-                        ZooDefs.CONFIG_NODE,
-                        false
-                    )
-                )
+        final byte[] newConfig = this.get().getConfig(
+            this,
+            this.get().exists(
+                ZooDefs.CONFIG_NODE,
+                false
             )
         );
+        if (newConfig.length > 0) {
+            this.get().updateServerList(new String(newConfig));
+        }
     }
 
     @Override
