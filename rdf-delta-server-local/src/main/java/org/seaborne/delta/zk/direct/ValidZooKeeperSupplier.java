@@ -84,7 +84,6 @@ public final class ValidZooKeeperSupplier implements Supplier<ZooKeeper>, Watche
                         case NOT_CONNECTED:
                             try {
                                 this.connect();
-                                this.token.wait(100 * (10 ^ tries));
                             } catch (final IOException | KeeperException e) {
                                 LOG.error("Unable to connect to the ZooKeeper Ensemble.", e);
                             }
