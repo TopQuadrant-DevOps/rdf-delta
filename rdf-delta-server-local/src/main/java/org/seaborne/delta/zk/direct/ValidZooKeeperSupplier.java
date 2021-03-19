@@ -74,8 +74,10 @@ public final class ValidZooKeeperSupplier implements Supplier<ZooKeeper>, Watche
             long tries = 1;
             synchronized (this.token) {
                 while (!this.isValid) {
+                    LOG.info("Connection flagged as invalid with state: {}", this.zooKeeper.getState());
                     switch (this.zooKeeper.getState()) {
                         case CONNECTING:
+                            LOG.info("Waiting...");
                             this.token.wait(3000);
                             break;
                         case AUTH_FAILED:
@@ -83,6 +85,7 @@ public final class ValidZooKeeperSupplier implements Supplier<ZooKeeper>, Watche
                         case CLOSED:
                         case NOT_CONNECTED:
                             try {
+                                LOG.info("Attempting to reconnect...");
                                 this.connect();
                             } catch (final IOException | KeeperException e) {
                                 LOG.error("Unable to connect to the ZooKeeper Ensemble.", e);
@@ -90,14 +93,15 @@ public final class ValidZooKeeperSupplier implements Supplier<ZooKeeper>, Watche
                         case CONNECTED:
                         case ASSOCIATING:
                         case CONNECTEDREADONLY:
+                            LOG.info("Misflagged. Marking the connection as valid.");
                             this.isValid = true;
                     }
                     if (tries == this.retries) {
                         throw new ZkException(
-                                String.format(
-                                        "Failed after %d attempts to connect to the ZooKeeper Ensemble.",
-                                        this.retries
-                                )
+                            String.format(
+                                "Failed after %d attempts to connect to the ZooKeeper Ensemble.",
+                                this.retries
+                            )
                         );
                     } else {
                         ++tries;
@@ -121,6 +125,7 @@ public final class ValidZooKeeperSupplier implements Supplier<ZooKeeper>, Watche
         if (newConfig.length > 0) {
             synchronized (this.token) {
                 this.connectString = new String(newConfig);
+                LOG.info("Setting the connectString to {}", this.connectString);
                 this.get().updateServerList(this.connectString);
             }
         }
@@ -130,6 +135,7 @@ public final class ValidZooKeeperSupplier implements Supplier<ZooKeeper>, Watche
     public void process(final WatchedEvent event) {
         if (event.getType() == Watcher.Event.EventType.NodeDataChanged) {
             try {
+                LOG.info("New config received.");
                 this.updateConfig();
             } catch (final KeeperException | InterruptedException e) {
                 LOG.error("Failure retrieving the updated ZooKeeper config.", e);
