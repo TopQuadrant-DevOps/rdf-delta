@@ -24,21 +24,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public final class ValidZooKeeperSupplier implements Supplier<ZooKeeper>, Watcher, AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(ValidZooKeeperSupplier.class);
     private final Object token = new Object();
     private final int retries;
-    private String connectString;
+    private CharSequence connectString;
     private ZooKeeper zooKeeper;
     private boolean isValid = false;
 
-    public ValidZooKeeperSupplier(final String connectString) throws IOException, KeeperException, InterruptedException {
+    public ValidZooKeeperSupplier(final CharSequence connectString) throws IOException, KeeperException, InterruptedException {
         this(connectString, 5);
     }
 
-    public ValidZooKeeperSupplier(final String connectString, final int retries) throws IOException, KeeperException, InterruptedException {
+    public ValidZooKeeperSupplier(final CharSequence connectString, final int retries) throws IOException, KeeperException, InterruptedException {
         this.connectString = connectString;
         this.retries = retries;
         this.connect();
@@ -46,7 +48,7 @@ public final class ValidZooKeeperSupplier implements Supplier<ZooKeeper>, Watche
 
     private void connect() throws IOException, KeeperException, InterruptedException {
         this.zooKeeper = new ZooKeeper(
-            this.connectString,
+            this.connectString.toString(),
             10_000,
             watchedEvent -> {
                 synchronized (this.token) {
@@ -125,9 +127,17 @@ public final class ValidZooKeeperSupplier implements Supplier<ZooKeeper>, Watche
         );
         if (newConfig.length > 0) {
             synchronized (this.token) {
-                this.connectString = ConfigUtils.getClientConfigStr(new String(newConfig)).split(" ")[1];
+                this.connectString = Arrays.stream(new String(newConfig).split("\n"))
+                    .filter(s -> s.startsWith("server"))
+                    .map(s -> s.split("=")[1])
+                    .map(
+                        s -> {
+                            var elements = s.split(":");
+                            return String.format("%s:%s", elements[0], elements[elements.length - 1]);
+                        }
+                    ).collect(Collectors.joining(","));
                 LOG.info("Setting the connectString to {}", this.connectString);
-                this.get().updateServerList(this.connectString);
+                this.get().updateServerList(this.connectString.toString());
             }
         }
     }
