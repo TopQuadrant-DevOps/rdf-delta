@@ -82,14 +82,14 @@ public final class ValidZooKeeperSupplier implements Supplier<ZooKeeper>, Watche
                             break;
                         case AUTH_FAILED:
                             throw new ZkException("Authentication failed.");
-//                        case CLOSED:
-//                        case NOT_CONNECTED:
-//                            try {
-//                                LOG.info("Attempting to reconnect...");
-//                                this.connect();
-//                            } catch (final IOException | KeeperException e) {
-//                                LOG.error("Unable to connect to the ZooKeeper Ensemble.", e);
-//                            }
+                        case CLOSED:
+                        case NOT_CONNECTED:
+                            try {
+                                LOG.info("Attempting to reconnect...");
+                                this.connect();
+                            } catch (final IOException | KeeperException e) {
+                                LOG.error("Unable to connect to the ZooKeeper Ensemble.", e);
+                            }
                         case CONNECTED:
                         case ASSOCIATING:
                         case CONNECTEDREADONLY:
