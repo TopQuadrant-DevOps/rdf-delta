@@ -40,12 +40,12 @@ public final class ValidZooKeeperSupplier implements Supplier<ZooKeeper>, Watche
     public ValidZooKeeperSupplier(final String connectString, final int retries) throws IOException, KeeperException, InterruptedException {
         this.connectString = connectString;
         this.retries = retries;
-        this.connect(connectString);
+        this.connect();
     }
 
-    private void connect(final String connectString) throws IOException, KeeperException, InterruptedException {
+    private void connect() throws IOException, KeeperException, InterruptedException {
         this.zooKeeper = new ZooKeeper(
-                connectString,
+            this.connectString,
             10_000,
             watchedEvent -> {
                 synchronized (this.token) {
@@ -83,22 +83,22 @@ public final class ValidZooKeeperSupplier implements Supplier<ZooKeeper>, Watche
                         case CLOSED:
                         case NOT_CONNECTED:
                             try {
-                                this.connect(this.connectString);
+                                this.connect();
                                 this.token.wait();
                             } catch (final IOException | KeeperException e) {
                                 LOG.error("Unable to connect to the ZooKeeper Ensemble.", e);
                             }
                     }
-                }
-                if (tries == this.retries) {
-                    throw new ZkException(
-                        String.format(
-                            "Failed after %d attempts to connect to the ZooKeeper Ensemble.",
-                            this.retries
-                        )
-                    );
-                } else {
-                    tries++;
+                    if (tries == this.retries) {
+                        throw new ZkException(
+                                String.format(
+                                        "Failed after %d attempts to connect to the ZooKeeper Ensemble.",
+                                        this.retries
+                                )
+                        );
+                    } else {
+                        ++tries;
+                    }
                 }
             }
             return this.zooKeeper;
@@ -116,8 +116,10 @@ public final class ValidZooKeeperSupplier implements Supplier<ZooKeeper>, Watche
             )
         );
         if (newConfig.length > 0) {
-            this.connectString = new String(newConfig);
-            this.get().updateServerList(this.connectString);
+            synchronized (this.token) {
+                this.connectString = new String(newConfig);
+                this.get().updateServerList(this.connectString);
+            }
         }
     }
 
