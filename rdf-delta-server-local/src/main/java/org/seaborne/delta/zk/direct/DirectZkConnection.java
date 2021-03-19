@@ -182,7 +182,7 @@ public final class DirectZkConnection implements ZkConnection {
 
     @Override
     public void close() throws Exception {
-        LOG.debug("Closing ZooKeeper connection.");
+        LOG.info("Closing ZooKeeper connection.");
         this.client.get().close();
     }
 }
