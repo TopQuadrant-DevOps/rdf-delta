@@ -18,6 +18,7 @@
 package org.seaborne.delta.zk.direct;
 
 import org.apache.zookeeper.*;
+import org.apache.zookeeper.server.util.ConfigUtils;
 import org.seaborne.delta.zk.ZkException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -124,7 +125,7 @@ public final class ValidZooKeeperSupplier implements Supplier<ZooKeeper>, Watche
         );
         if (newConfig.length > 0) {
             synchronized (this.token) {
-                this.connectString = new String(newConfig);
+                this.connectString = ConfigUtils.getClientConfigStr(new String(newConfig));
                 LOG.info("Setting the connectString to {}", this.connectString);
                 this.get().updateServerList(this.connectString);
             }
