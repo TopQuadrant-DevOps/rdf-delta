@@ -43,7 +43,7 @@ public final class DirectZkConnection implements ZkConnection {
 
     private final Supplier<ZooKeeper> client;
 
-    private DirectZkConnection(final Supplier<ZooKeeper> client) throws InterruptedException, IOException, KeeperException {
+    private DirectZkConnection(final Supplier<ZooKeeper> client) {
         this.client = client;
         this.lockFactory = new DirectZkLockFactory(client);
     }
@@ -52,22 +52,26 @@ public final class DirectZkConnection implements ZkConnection {
 
     @Override
     public boolean pathExists(final String path) throws KeeperException, InterruptedException {
+        LOG.debug("Checking if {} exists.", path);
         return this.client.get().exists(path, false) != null;
     }
 
     @Override
     public  final String ensurePathExists(final String path) throws KeeperException, InterruptedException {
+        LOG.debug("Ensuring {} exists.", path);
         ZKPaths.mkdirs(this.client.get(), path, true);
         return path;
     }
 
     @Override
     public byte[] fetch(final String path) throws KeeperException, InterruptedException {
+        LOG.debug("Fetching {}.", path);
         return this.client.get().getData(path, false, this.client.get().exists(path, false));
     }
 
     @Override
     public byte[] fetch(final Watcher watcher,  final String path) throws KeeperException, InterruptedException {
+        LOG.debug("Fetching {}.", path);
         return this.client.get().getData(path, watcher, this.client.get().exists(path, false));
     }
 
@@ -83,11 +87,13 @@ public final class DirectZkConnection implements ZkConnection {
 
     @Override
     public List<String> fetchChildren(final String path) throws KeeperException, InterruptedException {
+        LOG.debug("Fetching the children of {}.", path);
         return this.client.get().getChildren(path, false);
     }
 
     @Override
     public List<String> fetchChildren(final Watcher watcher,  final String path) throws KeeperException, InterruptedException {
+        LOG.debug("Fetching the children of {}.", path);
         return this.client.get().getChildren(path, watcher);
     }
 
@@ -98,6 +104,7 @@ public final class DirectZkConnection implements ZkConnection {
 
     @Override
     public String createZNode(final String path, final CreateMode mode) throws KeeperException, InterruptedException {
+        LOG.debug("Creating {}.", path);
         return this.client.get().create(
             path,
             new byte[0],
@@ -113,6 +120,7 @@ public final class DirectZkConnection implements ZkConnection {
 
     @Override
     public String createAndSetZNode(final String path, byte[] bytes) throws KeeperException, InterruptedException {
+        LOG.debug("Creating {} and setting it to {}.", path, new String(bytes));
         return this.client.get().create(
             path,
             bytes,
@@ -128,11 +136,13 @@ public final class DirectZkConnection implements ZkConnection {
 
     @Override
     public void setZNode(final String path, byte[] bytes) throws KeeperException, InterruptedException {
+        LOG.debug("Setting {} to {}.", path, new String(bytes));
         this.client.get().setData(path, bytes, this.client.get().exists(path, false).getVersion());
     }
 
     @Override
     public void deleteZNodeAndChildren(final String path) throws KeeperException, InterruptedException {
+        LOG.debug("Deleting {} and its children.", path);
         final Transaction transaction = this.client.get().transaction();
         this.deleteZNodeAndChildren(transaction, path);
         transaction.commit();
@@ -172,6 +182,7 @@ public final class DirectZkConnection implements ZkConnection {
 
     @Override
     public void close() throws Exception {
+        LOG.debug("Closing ZooKeeper connection.");
         this.client.get().close();
     }
 }
