@@ -138,6 +138,9 @@ public final class ValidZooKeeperSupplier implements Supplier<ZooKeeper>, Watche
                     ).collect(Collectors.joining(","));
                 LOG.info("Setting the connectString to {}", this.connectString);
                 this.get().updateServerList(this.connectString.toString());
+                do {
+                    this.token.wait(5000);
+                } while (!this.isValid);
             }
         }
     }
