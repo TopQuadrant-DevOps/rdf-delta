@@ -50,7 +50,7 @@ public class PatchStoreProviderZk implements PatchStoreProvider {
             Log.error(this, "No connection string in configuration");
         try {
             return new WrappedUncheckedZkConnection(DirectZkConnection.connect(connectionString));
-        } catch (IOException | KeeperException | InterruptedException e) {
+        } catch (final IOException | KeeperException | InterruptedException e) {
             throw new ZkException(
                 String.format("Unable to connect to ZooKeeper with connect string %s", connectionString),
                 e
