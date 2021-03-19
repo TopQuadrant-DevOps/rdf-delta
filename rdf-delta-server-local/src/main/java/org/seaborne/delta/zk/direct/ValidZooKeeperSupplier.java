@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.function.Supplier;
 
-public final class ValidZooKeeperSupplier implements Supplier<ZooKeeper>, Watcher {
+public final class ValidZooKeeperSupplier implements Supplier<ZooKeeper>, Watcher, AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(ValidZooKeeperSupplier.class);
     private final Object token = new Object();
     private final int retries;
@@ -143,5 +143,10 @@ public final class ValidZooKeeperSupplier implements Supplier<ZooKeeper>, Watche
                 throw new ZkException("Failure updating the ZooKeeper config.", e);
             }
         }
+    }
+
+    @Override
+    public void close() throws Exception {
+        this.zooKeeper.close();
     }
 }

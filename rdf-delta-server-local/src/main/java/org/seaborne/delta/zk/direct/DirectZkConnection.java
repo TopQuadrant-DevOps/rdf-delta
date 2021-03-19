@@ -41,9 +41,9 @@ public final class DirectZkConnection implements ZkConnection {
 
     private final DirectZkLockFactory lockFactory;
 
-    private final Supplier<ZooKeeper> client;
+    private final ValidZooKeeperSupplier client;
 
-    private DirectZkConnection(final Supplier<ZooKeeper> client) {
+    private DirectZkConnection(final ValidZooKeeperSupplier client) {
         this.client = client;
         this.lockFactory = new DirectZkLockFactory(client);
     }
@@ -183,6 +183,6 @@ public final class DirectZkConnection implements ZkConnection {
     @Override
     public void close() throws Exception {
         LOG.info("Closing ZooKeeper connection.");
-        this.client.get().close();
+        this.client.close();
     }
 }
