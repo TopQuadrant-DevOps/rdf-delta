@@ -72,8 +72,8 @@ public final class ValidZooKeeperSupplier implements Supplier<ZooKeeper>, Watche
     public ZooKeeper get() {
         try {
             int tries = 1;
-            while (!this.isValid) {
-                synchronized (this.token) {
+            synchronized (this.token) {
+                while (!this.isValid) {
                     switch (this.zooKeeper.getState()) {
                         case CONNECTING:
                             this.token.wait();
@@ -84,6 +84,7 @@ public final class ValidZooKeeperSupplier implements Supplier<ZooKeeper>, Watche
                         case NOT_CONNECTED:
                             try {
                                 this.connect(this.connectString);
+                                this.token.wait();
                             } catch (final IOException | KeeperException e) {
                                 LOG.error("Unable to connect to the ZooKeeper Ensemble.", e);
                             }
