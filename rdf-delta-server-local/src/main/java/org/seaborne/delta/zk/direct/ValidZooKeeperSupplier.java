@@ -115,7 +115,8 @@ public final class ValidZooKeeperSupplier implements Supplier<ZooKeeper>, Watche
             )
         );
         if (newConfig.length > 0) {
-            this.get().updateServerList(new String(newConfig));
+            this.connectString = new String(newConfig);
+            this.get().updateServerList(this.connectString);
         }
     }
 
