@@ -125,7 +125,7 @@ public final class ValidZooKeeperSupplier implements Supplier<ZooKeeper>, Watche
         );
         if (newConfig.length > 0) {
             synchronized (this.token) {
-                this.connectString = ConfigUtils.getClientConfigStr(new String(newConfig));
+                this.connectString = ConfigUtils.getClientConfigStr(new String(newConfig)).split(" ")[1];
                 LOG.info("Setting the connectString to {}", this.connectString);
                 this.get().updateServerList(this.connectString);
             }
