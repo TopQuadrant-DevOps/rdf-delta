@@ -19,11 +19,8 @@
 package org.seaborne.delta.server.local.patchstores.any;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Objects;
 
 import org.seaborne.delta.server.local.PatchStore;
-import org.seaborne.delta.server.local.PatchStoreProvider;
 import org.seaborne.delta.server.local.patchstores.file.PatchStoreFile;
 import org.seaborne.delta.server.local.patchstores.rdb.PatchStoreRocks;
 
@@ -40,11 +37,4 @@ import org.seaborne.delta.server.local.patchstores.rdb.PatchStoreRocks;
  */
 public abstract class AbstractPatchStoreLocal extends PatchStore {
 
-    protected final Path patchLogDirectory;
-
-    protected AbstractPatchStoreLocal(String patchLogDirectory, PatchStoreProvider provider) {
-        super(provider);
-        Objects.requireNonNull(patchLogDirectory);
-        this.patchLogDirectory = Paths.get(patchLogDirectory);
-    }
 }

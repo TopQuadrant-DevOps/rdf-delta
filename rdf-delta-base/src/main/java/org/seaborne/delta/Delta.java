@@ -27,7 +27,6 @@ public class Delta {
     static { JenaSystem.init(); }
 
     public static String namespace = "http://jena.apache.org/rdf-delta/" ;
-    private static volatile boolean initialized = false ;
     // Operations log - not development debugging.
     private static String LoggerNameBase = "Delta";
 
@@ -40,21 +39,9 @@ public class Delta {
 
     // For dynamically change logging (during development)
 
-    /** Switch logging on from this point */
-    public final static void enableDeltaLogging() {
-        LogCtl.setInfo(LoggerNameBase);
-    }
-
-    /** Switch logging off */
-    public final static void disableDeltaLogging() {
-        LogCtl.disable(LoggerNameBase);
-    }
-
     public final static Logger DELTA_LOG        = getDeltaLogger("Delta") ;
     // Client operations
     public final static Logger DELTA_CLIENT     = getDeltaLogger("Delta") ;
-    // Unused?
-    public final static Logger DELTA_PATCH      = getDeltaLogger("Patch") ;
     // HTTP actions.
     public final static Logger DELTA_HTTP_LOG   = getDeltaLogger("HTTP") ;
     // RPC actions

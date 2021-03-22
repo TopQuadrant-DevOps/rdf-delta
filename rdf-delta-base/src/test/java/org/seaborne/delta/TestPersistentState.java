@@ -78,7 +78,6 @@ public class TestPersistentState {
         PersistentState pc = new PersistentState(filename) ;
         pc.setInteger(10) ;
         assertEquals(10, pc.getInteger());
-        long x = pc.inc() ;
         assertEquals(11, pc.getInteger());
         
         PersistentState pc2 = new PersistentState(filename) ;

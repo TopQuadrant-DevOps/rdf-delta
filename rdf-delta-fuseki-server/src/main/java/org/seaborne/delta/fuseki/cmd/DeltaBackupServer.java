@@ -32,7 +32,6 @@ import org.apache.jena.atlas.json.JsonArray;
 import org.apache.jena.atlas.json.JsonObject;
 import org.apache.jena.atlas.json.JsonValue;
 import org.apache.jena.fuseki.main.JettyServer;
-import org.seaborne.delta.Delta;
 import org.seaborne.delta.fuseki.PatchWriteServlet;
 import org.seaborne.delta.lib.JSONX;
 import org.seaborne.delta.lib.LogX;
@@ -49,13 +48,6 @@ public class DeltaBackupServer {
         System.setProperty("log4j.configuration", "delta");
         LogX.setJavaLogging();
         new Inner(args).mainRun();
-    }
-
-    public static JettyServer build(String...args) {
-        Delta.init();
-        Inner inner = new Inner(args);
-        inner.process() ;
-        return inner.build() ;
     }
 
     static class BackupArea {
@@ -190,7 +182,7 @@ public class DeltaBackupServer {
                 cfg.port = obj.get(jPort).getAsNumber().value().intValue();
                 JsonArray a = obj.get(jLogs).getAsArray();
                 a.forEach(elt-> {
-                    BackupArea area = parseLogObject(cfg, elt);
+                    BackupArea area = parseLogObject(elt);
                     cfg.logs.add(area);
                 });
             } catch (Exception ex) {
@@ -198,7 +190,7 @@ public class DeltaBackupServer {
             }
         }
 
-        private BackupArea parseLogObject(BackupConfig cfg, JsonValue elt) {
+        private BackupArea parseLogObject(JsonValue elt) {
             String name = elt.getAsObject().get(jName).getAsString().value();
             String dir = elt.getAsObject().get(jDir).getAsString().value();
             String file = elt.getAsObject().get(jFile).getAsString().value();
@@ -207,16 +199,5 @@ public class DeltaBackupServer {
             return new BackupArea(name, dir, file);
         }
 
-        private void writeConf(BackupConfig cfg) {
-            JsonObject obj = JSONX.buildObject(b->{
-                b   .pair(jPort, cfg.port)
-                    .key(jLogs).startArray();
-                cfg.logs.forEach(a->
-                    b.startObject().pair(jName, a.name).pair(jDir, a.dir).pair(jFile, a.file).finishObject()
-                    );
-                b.finishArray();
-            });
-            JSON.write(System.out, obj);
-        }
-   }
+    }
 }

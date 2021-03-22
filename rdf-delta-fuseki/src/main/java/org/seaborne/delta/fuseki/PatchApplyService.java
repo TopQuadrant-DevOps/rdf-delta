@@ -119,7 +119,7 @@ public class PatchApplyService extends ActionREST {
         ServletOps.success(action);
     }
 
-    private enum WithPatchTxn { PATCH_TXN, EXTERNAL_TXN }
+    private enum WithPatchTxn { EXTERNAL_TXN }
 
     /** Apply a patch action.
      * <p>

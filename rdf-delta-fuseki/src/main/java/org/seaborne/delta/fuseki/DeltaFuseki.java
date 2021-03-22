@@ -27,21 +27,6 @@ import org.seaborne.patch.RDFPatchOps ;
 
 /** Library of operations. */
 public class DeltaFuseki {
-    public static FusekiServer fuseki(int port, String config) {
-        return FusekiServer.create().port(port).parseConfigFile(config).build().start();
-    }
-
-    /**
-     * Build a Fuseki server whose dataset is a changes dataset wrapping the given base.
-     */
-    public static FusekiServer deltaFuseki(int port, String name, DatasetGraph dsgBase, RDFChanges changes) {
-        DatasetGraph dsg = RDFPatchOps.changes(dsgBase, changes);
-        return
-            FusekiServer.create().port(port)
-                .add(name, dsg)
-                .enablePing(true)
-                .build();
-    }
 
     public static Operation patchOp = Operation.alloc(Delta.namespace+"patch", "rdf-Patch", "RDF Patch Service");
     public static String patchContentType = "application/rdf-patch";

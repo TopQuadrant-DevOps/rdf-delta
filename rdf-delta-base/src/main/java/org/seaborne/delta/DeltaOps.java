@@ -33,11 +33,7 @@ public class DeltaOps {
         System.out.printf(fmt, args);
         System.out.println();
     }
-    
-    public static Printer printerToLog(Logger log) {
-        return (fmt, args) -> log.info(String.format(fmt, args));
-    }
-    
+
     public static String verString(Version version) {
         if ( version == null )
             return "<null>";

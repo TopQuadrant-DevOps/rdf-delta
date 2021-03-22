@@ -18,7 +18,6 @@
 package org.seaborne.patch.system;
 
 import org.apache.jena.graph.Node;
-import org.apache.jena.sparql.core.DatasetGraph;
 import org.seaborne.patch.RDFChanges;
 
 // UNFINISHED
@@ -27,10 +26,6 @@ import org.seaborne.patch.RDFChanges;
 public class DatasetGraphRealChanges extends AbstractDatasetGraphAddDelete {
     /** With checking, the {@link RDFChanges} becomes reversible */
     protected final boolean checking = true ;
-
-    public DatasetGraphRealChanges(DatasetGraph dsg) {
-        super(dsg) ;
-    }
 
     @Override
     protected void actionAdd(Node g, Node s, Node p, Node o) {

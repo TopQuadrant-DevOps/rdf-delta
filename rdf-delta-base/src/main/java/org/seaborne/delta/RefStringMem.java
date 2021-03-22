@@ -20,8 +20,6 @@ package org.seaborne.delta;
 public class RefStringMem implements RefString {
     private String value;
 
-    public RefStringMem(String x) { this.value = x; }
-
     @Override
     public String getString() {
         return value;

@@ -53,9 +53,6 @@ import org.seaborne.patch.filelog.rotate.ManagedOutput;
  * It is a Fuseki servlet and not a dataset service.
  */
 public class PatchWriteServlet extends ServletProcessor {
-    static CounterName counterPatches     = CounterName.register("RDFpatch-write", "rdf-patch.write.requests");
-    static CounterName counterPatchesGood = CounterName.register("RDFpatch-write", "rdf-patch.write.good");
-    static CounterName counterPatchesBad  = CounterName.register("RDFpatch-write", "rdf-patch.write.bad");
     private ManagedOutput output;
 
     public PatchWriteServlet(String dir, String fn, FilePolicy policy) {

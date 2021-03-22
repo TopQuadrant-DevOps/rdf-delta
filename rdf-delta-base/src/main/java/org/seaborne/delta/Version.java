@@ -50,15 +50,6 @@ public class Version implements Comparable<Version> {
         return create(ver);
     }
 
-    /** Display name for a version (as long) */
-    public static String str(long version) {
-        if ( version == DeltaConst.VERSION_UNSET )
-            return "unset";
-        if ( version == DeltaConst.VERSION_INIT )
-            return "init";
-        return Long.toString(version);
-    }
-
 
     public static Version create(JsonValue version) {
         Objects.requireNonNull(version, "version");
@@ -116,25 +107,11 @@ public class Version implements Comparable<Version> {
     }
 
 
-
-    public Version dec() {
-        if ( this == INIT || this == UNSET )
-            throw new DeltaException("Attempt to get version before a non-version number: "+this);
-        if ( ! isValid() )
-            throw new DeltaException("Attempt to get dec version on a non-version number: "+this);
-        return Version.create(version-1);
-    }
-
     /** Is this version a possible version? (i.e. not a marker) */
     public static boolean isValid(Version version) {
         if ( version == null )
             return false;
         return version.isValid();
-    }
-
-    /** Is this version a possible version? (i.e. not a marker) */
-    public static boolean isValid(long version) {
-        return version > Version.INIT.version ;
     }
 
     /** Is this version a possible version? (i.e. not a marker) */

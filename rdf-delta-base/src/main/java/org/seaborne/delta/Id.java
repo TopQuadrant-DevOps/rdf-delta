@@ -50,9 +50,6 @@ public final class Id {
     private static final String nilStr = "00000000-0000-0000-0000-000000000000";
     private static final Id nilId = Id.fromUUID(UUID.fromString(nilStr));
 
-    /** Length in chars of a UUID string, without any scheme info */
-    public static int lenStrUUID() { return nilStr.length(); }
-
     /** Quick test of whether a string looks like an UUID or not */
     public static boolean maybeUUID(String str) {
         return str.length() == nilStr.length() && str.charAt(8)=='-';
@@ -142,15 +139,6 @@ public final class Id {
         }
     }
 
-    /** Parse a UUID string, return a default if it does not parse correctly */
-    public static UUID parseUUID(String patchStr, UUID dft) {
-        try {
-            return UUID.fromString(patchStr);
-        } catch (IllegalArgumentException ex) {
-            return dft;
-        }
-    }
-
     /**
      * Create an Id from a UUID string, return a default if the UUID string
      * does not parse correctly.
@@ -174,10 +162,6 @@ public final class Id {
     private Id(String id) {
         uuid = null ;
         string = Objects.requireNonNull(id) ;
-    }
-
-    public boolean isNil() {
-        return this.equals(nilId);
     }
 
     /** Suitable for putting into an HTTP request query string. */
@@ -242,7 +226,6 @@ public final class Id {
     }
 
     public static String shortUUIDstr(UUID uuid) {
-        String str = uuid.toString();
         int version = uuid.version();
         if ( version == 1 )
             // Type 1 : include varying part! xxxx-yyyy

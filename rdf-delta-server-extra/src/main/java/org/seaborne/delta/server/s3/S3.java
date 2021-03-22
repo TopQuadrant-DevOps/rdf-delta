@@ -74,9 +74,6 @@ public class S3 {
             .build();
     }
 
-    // Anon credentials and provider - used in S3Mock to ensure non default AWS credentials mechanism is used in tests.
-    private static AWSCredentialsProvider anon = new AWSStaticCredentialsProvider(new AnonymousAWSCredentials());
-
     public static AmazonS3 buildS3(LocalServerConfig configuration) {
         String region = configuration.getProperty(pRegion);
         String endpoint = configuration.getProperty(pEndpoint);
@@ -107,7 +104,7 @@ public class S3 {
     public static boolean bucketExists(AmazonS3 client, String bucketName) {
         try {
             HeadBucketRequest request = new HeadBucketRequest(bucketName);
-            HeadBucketResult result = client.headBucket(request);
+            client.headBucket(request);
             return true;
         }
         catch (AmazonServiceException awsEx) {
@@ -126,7 +123,7 @@ public class S3 {
     }
 
     public static void createBucket(AmazonS3 client, String bucketName) {
-        Bucket bucket = client.createBucket(bucketName);
+        client.createBucket(bucketName);
     }
 
     private static class PropertiesBuilder {

@@ -19,12 +19,10 @@ package org.seaborne.delta;
 
 import java.util.regex.Pattern ;
 
-import org.apache.jena.atlas.web.AcceptList ;
 import org.apache.jena.atlas.web.ContentType ;
 import org.apache.jena.sparql.util.Symbol ;
 
 public class DeltaConst {
-    public static final String opPatchURI = Delta.namespace+"patch";
 
     // Letters, numbers, "."  "_" and "-"
     // Can't start with a "-" or "."
@@ -69,7 +67,6 @@ public class DeltaConst {
     public static final String F_DATASOURCE    = "datasource";
     public static final String F_STORAGE       = "storage";
     public static final String F_CLIENT        = "client";
-    public static final String F_LOCK          = "lock";
     public static final String F_TOKEN         = "token";
     // Two arg operations.
     public static final String F_SRC_NAME      = "src";
@@ -82,7 +79,6 @@ public class DeltaConst {
     @Deprecated
     public static final String F_BASE          = "base";
 
-    public static final String F_SOURCES       = "sources";
     public static final String F_ID            = "id";
     public static final String F_VERSION       = "version";
     public static final String F_LOCATION      = "location";
@@ -90,7 +86,6 @@ public class DeltaConst {
     public static final String F_MAXVER        = "max_version";
     public static final String F_LATEST        = "latest";
     public static final String F_NAME          = "name";
-    public static final String F_DATA          = "data";
     public static final String F_URI           = "uri";
     public static final String F_LOG_TYPE      = "log_type";
     public static final String F_STORE         = "store";
@@ -110,12 +105,6 @@ public class DeltaConst {
     /** Default choice of port */
     public static final int    PORT            = 1066;
     public static final int    SYSTEM_VERSION  = 1;
-
-    // Short names of log providers. Lowercase.
-    public static final String LOG_FILE        = "file";
-    public static final String LOG_MEM         = "mem";
-    public static final String LOG_SQL         = "sql";
-    public static final String LOG_S3          = "s3";
 
     // Properties used to define patch store providers.
     public static final String pDeltaStore     = "delta.store";
@@ -140,28 +129,14 @@ public class DeltaConst {
 
     // Content type constants for RDF Patch.
     public static final String contentTypePatchText     = "application/rdf-patch";
-    public static final String contentTypePatchTextAlt  = "text/rdf-patch";
     public static final String contentTypePatchBinary   = "application/rdf-patch+thrift";
 
     // Preferred form.
     public static final ContentType ctPatchText         = ContentType.create(contentTypePatchText);
     public static final ContentType ctPatchBinary       = ContentType.create(contentTypePatchBinary);
 
-    public static final AcceptList rsOfferPatch         = AcceptList.create(contentTypePatchText,
-                                                                            contentTypePatchTextAlt,
-                                                                            contentTypePatchBinary);
-
-    // Environment variable name for the runtime area for the Delta server.
-    public static final String ENV_BASE        = "DELTA_BASE";
-
-    // Environment variable name for the installation area for the Delta server.
-    public static final String ENV_HOME        = "DELTA_HOME";
-
     // Environment variable name for the port number of the Delta server.
     public static final String ENV_PORT        = "DELTA_PORT";
-
-    /** The size of the server-wide LRU cache */
-    public static final int PATCH_CACHE_SIZE   = 1000;
 
     /** The version number when not set */
     public static long VERSION_UNSET    = -1;

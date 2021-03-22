@@ -154,14 +154,6 @@ public class Args {
         return new Args(request, datasourceName, patchId, version, clientId, tokenStr);
     }
 
-    private static UUID parseUUID(String patchStr, UUID dft) {
-        try {
-            return UUID.fromString(patchStr);
-        } catch (IllegalArgumentException ex) {
-            return dft;
-        }
-    }
-
     private static Long parseVersion(String intStr, Long dft) {
         if ( intStr.isEmpty() )
             return dft;

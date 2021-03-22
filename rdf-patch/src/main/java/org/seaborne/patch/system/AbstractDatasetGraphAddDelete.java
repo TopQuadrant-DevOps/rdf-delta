@@ -21,17 +21,12 @@ import java.util.Iterator;
 
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
-import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphWrapper;
 import org.apache.jena.sparql.core.GraphView;
 import org.apache.jena.sparql.core.Quad;
 
 /** Reduce all changes to calls to {@link #actionAdd} and {@link #actionDelete} */
 public abstract class AbstractDatasetGraphAddDelete extends DatasetGraphWrapper {
-
-    public AbstractDatasetGraphAddDelete(DatasetGraph dsg) {
-        super(dsg) ;
-    }
 
     protected abstract void actionAdd(Node g, Node s, Node p, Node o);
     protected abstract void actionDelete(Node g, Node s, Node p, Node o);

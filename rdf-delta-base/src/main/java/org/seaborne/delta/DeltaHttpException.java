@@ -32,21 +32,7 @@ public class DeltaHttpException extends DeltaException {
     public int getStatusCode() {
         return statusCode;
     }
-    
-    /** Convert to original exception. */
-    public static DeltaHttpException extract(DeltaHttpException ex) {
-        int statusCode = ex.getStatusCode();
-        String msg = ex.getMessage(); 
-        switch(statusCode) {
-            case HttpSC.BAD_REQUEST_400:    return new DeltaBadRequestException(msg); 
-            case HttpSC.NOT_FOUND_404:      return new DeltaNotFoundException(msg); 
-            case HttpSC.UNAUTHORIZED_401:   return new DeltaNotRegisteredException(msg); 
-            case HttpSC.FORBIDDEN_403:       
-            default:
-                return ex;
-        }
-    }
-    
+
     @Override
     public String toString() {
         return getStatusCode()+" : "+getMessage(); 
