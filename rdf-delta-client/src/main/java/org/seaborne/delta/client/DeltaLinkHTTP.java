@@ -59,15 +59,14 @@ public class DeltaLinkHTTP implements DeltaLink {
     private final String remoteReceive;
     private final String remoteData;
 
-    private Id clientId = null;
     private boolean linkOpen = false;
 
-    private Set<DeltaLinkListener> listeners = ConcurrentHashMap.newKeySet();
+    private final Set<DeltaLinkListener> listeners = ConcurrentHashMap.newKeySet();
 
     private final static JsonObject emptyObject = new JsonObject();
 
     public static DeltaLink connect(String serverURL) {
-        Objects.requireNonNull(serverURL, "DelatLinkHTTP: Null URL for the server");
+        Objects.requireNonNull(serverURL, "DeltaLinkHTTP: Null URL for the server");
         if ( ! serverURL.startsWith("http://") && ! serverURL.startsWith("https://") )
             throw new IllegalArgumentException("Bad server URL: '"+serverURL+"'");
         DeltaLink link = new DeltaLinkHTTP(serverURL);
@@ -84,9 +83,6 @@ public class DeltaLinkHTTP implements DeltaLink {
         this.remoteSend     = serverURL+"{"+DeltaConst.paramDatasource+"}";
         this.remoteReceive  = serverURL+"{"+DeltaConst.paramDatasource+"}";
         this.remoteData     = serverURL+DeltaConst.EP_InitData;
-//        // Separate URLs
-//        this.remoteSend = serverURL+DPConst.EP_Append;
-//        this.remoteReceive = serverURL+DPConst.EP_Fetch;
     }
 
     @Override
@@ -111,26 +107,21 @@ public class DeltaLinkHTTP implements DeltaLink {
     }
 
     // With backoff.
-    private static int RETRIES_COMMS_FAILURE = 2 ;
-
-    private static int RETRIES_HTTP_FAILURE = 2 ;
 
     // Like Callable but no Exception.
     interface Action<T> { T action() ; }
 
     /** Perform a retryable operation. Retry only happen if HttpException happens. */
-    private <T> T retry(Action<T> callable, Supplier<Boolean> retryable, Supplier<String> retryMsg, Supplier<String> failureMsg) {
-        for ( int i = 1 ; ; i++ ) {
-            try {
-                return callable.action();
-            } catch (HttpException ex) {
-                if ( failureMsg != null )
-                    // Other...
-                    Delta.DELTA_HTTP_LOG.warn(failureMsg.get());
-                throw ex;
-            }
-            // Any other exception - don't retry.
+    private <T> T retry(Action<T> callable, Supplier<String> failureMsg) {
+        try {
+            return callable.action();
+        } catch (HttpException ex) {
+            if ( failureMsg != null )
+                // Other...
+                Delta.DELTA_HTTP_LOG.warn(failureMsg.get());
+            throw ex;
         }
+        // Any other exception - don't retry.
     }
 
     private RDFChangesHTTP createRDFChanges(Id dsRef) {
@@ -141,25 +132,21 @@ public class DeltaLinkHTTP implements DeltaLink {
 
     /** Calculate the patch log URL */
     private String calcChangesURL(Id dsRef) {
-        return createURL(remoteSend, DeltaConst.paramDatasource, dsRef.asParam());
+        return createURL(remoteSend, dsRef.asParam());
     }
 
     @Override
     public Version append(Id dsRef, RDFPatch patch) {
         checkLink();
 
-        long t1 = System.currentTimeMillis();
         String str = retry(()->{
                             RDFChangesHTTP remote = createRDFChanges(dsRef);
                             // [NET] Network point
-                            // If not re-applyable, we need a copy.
+                            // If not re-applicable, we need a copy.
                             patch.apply(remote);
                             return remote.getResponse();
                         },
-                        ()->patch.repeatable(),
-                        ()->"Retry append patch.", ()->"Failed to append patch : "+dsRef);
-        long t2 = System.currentTimeMillis();
-        long elapsed_ms = (t2-t1);
+                ()->"Failed to append patch : "+dsRef);
         if ( str != null ) {
             try {
                 JsonObject obj = JSON.parse(str);
@@ -181,27 +168,27 @@ public class DeltaLinkHTTP implements DeltaLink {
     public RDFPatch fetch(Id dsRef, Version version) {
         if ( !Version.isValid(version) )
             return null;
-        RDFPatch patch = fetchCommon(dsRef, DeltaConst.paramVersion, version.asParam());
+        RDFPatch patch = fetchCommon(dsRef, version.asParam());
         event(listener->listener.fetchByVersion(dsRef, version, patch));
         return patch;
     }
 
     @Override
     public RDFPatch fetch(Id dsRef, Id patchId) {
-        RDFPatch patch = fetchCommon(dsRef, DeltaConst.paramPatch, patchId.asParam());
+        RDFPatch patch = fetchCommon(dsRef, patchId.asParam());
         event(listener->listener.fetchById(dsRef, patchId, patch));
         return patch;
     }
 
-    private RDFPatch fetchCommon(Id dsRef, String param, String paramStr) {
+    private RDFPatch fetchCommon(Id dsRef, String paramStr) {
         checkLink();
 
         String url = remoteReceive;
-        url = createURL(url, DeltaConst.paramDatasource, dsRef.asParam());
+        url = createURL(url, dsRef.asParam());
         url = appendURL(url, paramStr);
         final String s = url;
         try {
-            RDFPatch patch =  retry(()->{
+            return retry(()->{
                 // [NET] Network point
                 InputStream in = HttpOp.execHttpGet(s) ;
                 if ( in == null )
@@ -210,8 +197,7 @@ public class DeltaLinkHTTP implements DeltaLink {
                 RDFChangesCollector collector = new RDFChangesCollector();
                 pr.apply(collector);
                 return collector.getRDFPatch();
-            }, ()->true, ()->"Retry fetch patch.", ()->"Failed to fetch patch.");
-            return patch;
+            }, ()->"Failed to fetch patch.");
         }
         catch ( HttpException ex) {
             if ( ex.getStatusCode() == HttpSC.NOT_FOUND_404 ) {
@@ -228,8 +214,8 @@ public class DeltaLinkHTTP implements DeltaLink {
             return url+"/"+string;
     }
 
-    private static String createURL(String url, String param, String value) {
-        return url.replace("{"+param+"}", value);
+    private static String createURL(String url, String value) {
+        return url.replace("{"+ DeltaConst.paramDatasource +"}", value);
     }
 
     @Override
@@ -237,46 +223,32 @@ public class DeltaLinkHTTP implements DeltaLink {
         return String.format("%s?%s=%s", remoteData, DeltaConst.paramDatasource, dsRef.asParam());
     }
 
-    public String getServerURL() {
-        return remoteServer ;
-    }
-
-    public String getServerSendURL() {
-        return remoteSend ;
-    }
-
-    public String getServerReceiveURL() {
-        return remoteReceive ;
-    }
-
     @Override
     public List<Id> listDatasets() {
         JsonObject obj = rpc(DeltaConst.OP_LIST_DS, emptyObject);
         JsonArray array = obj.get(DeltaConst.F_ARRAY).getAsArray();
-        List<Id> x = array.stream()
+
+        return array.stream()
             .map(jv->Id.fromString(jv.getAsString().value()))
-            .collect(Collectors.toList()) ;
-        return x ;
+            .collect(Collectors.toList());
     }
 
     @Override
     public List<DataSourceDescription> listDescriptions() {
         JsonObject obj = rpc(DeltaConst.OP_LIST_DSD, emptyObject);
         JsonArray array = obj.get(DeltaConst.F_ARRAY).getAsArray();
-        List<DataSourceDescription> x = array.stream()
+        return array.stream()
             .map(jv->getDataSourceDescription(jv.getAsObject()))
-            .collect(Collectors.toList()) ;
-        return x ;
+            .collect(Collectors.toList());
     }
 
     @Override
     public List<PatchLogInfo> listPatchLogInfo() {
         JsonObject obj = rpc(DeltaConst.OP_LIST_LOG_INFO, emptyObject);
         JsonArray array = obj.get(DeltaConst.F_ARRAY).getAsArray();
-        List<PatchLogInfo> x = array.stream()
+        return array.stream()
             .map(jv->PatchLogInfo.fromJson(jv.getAsObject()))
-            .collect(Collectors.toList()) ;
-        return x ;
+            .collect(Collectors.toList());
     }
 
     @Override
@@ -328,10 +300,8 @@ public class DeltaLinkHTTP implements DeltaLink {
 
     @Override
     public void removeDataSource(Id dsRef) {
-        JsonObject arg = JSONX.buildObject((b) -> {
-            b.key(DeltaConst.F_DATASOURCE).value(dsRef.asPlainString());
-        });
-        JsonObject obj = rpc(DeltaConst.OP_REMOVE_DS, arg);
+        JsonObject arg = JSONX.buildObject((b) -> b.key(DeltaConst.F_DATASOURCE).value(dsRef.asPlainString()));
+        rpc(DeltaConst.OP_REMOVE_DS, arg);
         listeners.forEach(listener->listener.removeDataSource(dsRef));
     }
 
@@ -344,10 +314,7 @@ public class DeltaLinkHTTP implements DeltaLink {
         });
 
         JsonObject obj = rpcOnce(DeltaConst.OP_LOCK, arg);
-        Id lockSession = idOrNullFromField(obj, DeltaConst.F_LOCK_REF);
-//        if ( lockSession == null )
-//            throw new DeltaException("Failed to get the patch server lock.");
-        return lockSession;
+        return idOrNullFromField(obj);
     }
 
     @Override
@@ -376,46 +343,10 @@ public class DeltaLinkHTTP implements DeltaLink {
 
     // Sketch of lock batching.
 
-//    @Override
-//    public Set refreshLocks(Set<Id> lockSet) {
-//        JsonObject arg = buildRefreshArg(lockSet);
-//        JsonObject obj = rpcOnce(DeltaConst.OP_LOCK_REFRESH, arg);
-//        // ???
-//    }
-//
-//    // batch refresh operation { array: [ { datasource: "", lock: ""} ] }
-//    /*package*/ static JsonObject buildRefreshArg(Set<Id> locks) {
-//        List<JsonObject> x = locks.stream().map(lockId->{
-//            return JSONX.buildObject(b->{
-//                b.pair(F_DATASOURCE, lockId.asPlainString());
-//                b.pair(F_LOCK_REF, lockId.asPlainString());
-//            });
-//        }).collect(toList());
-//        JsonArray array = new JsonArray();
-//        array.addAll(x);
-//        return JSONX.buildObject(b->b.pair(F_ARRAY, array));
-//    }
-//
-//    /*package*/ static Set<Id> buildRefreshRtn(JsonObject obj) {
-//        obj.getArray(F_ARRAY).
-//
-//        List<JsonObject> x = locks.stream().map(lockId->{
-//            return JSONX.buildObject(b->{
-//                b.pair(F_DATASOURCE, lockId.asPlainString());
-//                b.pair(F_LOCK_REF, lockId.asPlainString());
-//            });
-//        }).collect(toList());
-//        JsonArray array = new JsonArray();
-//        array.addAll(x);
-//        return JSONX.buildObject(b->b.pair(F_ARRAY, array));
-//    }
-
     @Override
     public LockState readLock(Id datasourceId) {
         Objects.requireNonNull(datasourceId);
-        JsonObject arg = JSONX.buildObject(b->{
-            b.key(DeltaConst.F_DATASOURCE).value(datasourceId.asPlainString());
-        });
+        JsonObject arg = JSONX.buildObject(b-> b.key(DeltaConst.F_DATASOURCE).value(datasourceId.asPlainString()));
         JsonObject rtn = rpcOnce(DeltaConst.OP_LOCK_READ, arg);
         if ( rtn.isEmpty() )
             return LockState.UNLOCKED;
@@ -434,10 +365,7 @@ public class DeltaLinkHTTP implements DeltaLink {
         });
 
         JsonObject obj = rpcOnce(DeltaConst.F_LOCK_GRAB, arg);
-        Id lockSession = idOrNullFromField(obj, DeltaConst.F_LOCK_REF);
-//        if ( lockSession == null )
-//            throw new DeltaException("Failed to get the patch server lock.");
-        return lockSession;
+        return idOrNullFromField(obj);
     }
 
     @Override
@@ -448,30 +376,24 @@ public class DeltaLinkHTTP implements DeltaLink {
             b.key(DeltaConst.F_DATASOURCE).value(datasourceId.asPlainString());
             b.key(DeltaConst.F_LOCK_REF).value(lockSession.asPlainString());
         });
-        JsonObject obj = rpcOnce(DeltaConst.OP_UNLOCK, arg);
+        rpcOnce(DeltaConst.OP_UNLOCK, arg);
     }
 
     @Override
     public DataSourceDescription getDataSourceDescription(Id dsRef) {
-        JsonObject arg = JSONX.buildObject((b) -> {
-            b.key(DeltaConst.F_DATASOURCE).value(dsRef.asPlainString());
-        });
+        JsonObject arg = JSONX.buildObject((b) -> b.key(DeltaConst.F_DATASOURCE).value(dsRef.asPlainString()));
         return getDataSourceDescription(arg);
     }
 
     @Override
     public DataSourceDescription getDataSourceDescriptionByName(String name) {
-        JsonObject arg = JSONX.buildObject((b) -> {
-            b.key(DeltaConst.F_NAME).value(name);
-        });
+        JsonObject arg = JSONX.buildObject((b) -> b.key(DeltaConst.F_NAME).value(name));
         return getDataSourceDescription(arg);
     }
 
     @Override
     public DataSourceDescription getDataSourceDescriptionByURI(String uri) {
-        JsonObject arg = JSONX.buildObject((b) -> {
-            b.key(DeltaConst.F_URI).value(uri);
-        });
+        JsonObject arg = JSONX.buildObject((b) -> b.key(DeltaConst.F_URI).value(uri));
         return getDataSourceDescription(arg);
     }
 
@@ -484,9 +406,7 @@ public class DeltaLinkHTTP implements DeltaLink {
 
     @Override
     public PatchLogInfo getPatchLogInfo(Id dsRef) {
-        JsonObject arg = JSONX.buildObject((b) -> {
-            b.key(DeltaConst.F_DATASOURCE).value(dsRef.asPlainString());
-        });
+        JsonObject arg = JSONX.buildObject((b) -> b.key(DeltaConst.F_DATASOURCE).value(dsRef.asPlainString()));
         return getPatchLogInfo(arg);
     }
 
@@ -505,24 +425,22 @@ public class DeltaLinkHTTP implements DeltaLink {
     private static Id idFromField(JsonObject obj, String fieldName) {
         try {
             String idStr = obj.get(fieldName).getAsString().value();
-            Id id = Id.fromString(idStr);
-            return id;
+            return Id.fromString(idStr);
         } catch (NullPointerException | JsonException ex) {
             throw new DeltaException("Failed to extract id from field '"+fieldName+"' in"+JSON.toStringFlat(obj));
         }
     }
 
-    private static Id idOrNullFromField(JsonObject obj, String fieldName) {
-        JsonValue jv = obj.get(fieldName);
+    private static Id idOrNullFromField(JsonObject obj) {
+        JsonValue jv = obj.get(DeltaConst.F_LOCK_REF);
         if ( jv == null )
             return null;
         if ( jv.isNull() )
             return null;
         if ( ! jv.isString() )
-            throw new DeltaException("String expected for field '"+fieldName+"' in"+JSON.toStringFlat(obj));
+            throw new DeltaException("String expected for field '"+ DeltaConst.F_LOCK_REF +"' in"+JSON.toStringFlat(obj));
         String idStr = jv.getAsString().value();
-        Id dsRef = Id.fromString(idStr);
-        return dsRef;
+        return Id.fromString(idStr);
     }
 
     /** Normal RPC primitive */
@@ -538,9 +456,7 @@ public class DeltaLinkHTTP implements DeltaLink {
         JsonObject argx = ( arg == null ) ? emptyObject : arg;
         // [NET] Network point
         return retry(()->DRPC.rpc(remoteServer + DeltaConst.EP_RPC, opName, argx),
-                     ()->true,
-                     ()->format("Retry : %s",opName),
-                     ()->format("Failed : %s %s",opName,JSON.toStringFlat(argx))
+                ()->format("Failed : %s %s",opName,JSON.toStringFlat(argx))
                      );
     }
 
@@ -559,7 +475,7 @@ public class DeltaLinkHTTP implements DeltaLink {
         return DRPC.rpc(remoteServer + DeltaConst.EP_RPC, opName, argx);
     }
 
-    private <X> void event(Consumer<DeltaLinkListener> action) {
+    private void event(Consumer<DeltaLinkListener> action) {
         listeners.forEach(action);
     }
 
