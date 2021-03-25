@@ -17,35 +17,30 @@
 
 package org.seaborne.delta.client;
 
-import static java.lang.String.format;
-import static org.seaborne.delta.DeltaConst.F_ARRAY;
-import static org.seaborne.delta.DeltaConst.F_DATASOURCE;
-import static org.seaborne.delta.DeltaConst.F_LOCK_REF;
-import static org.seaborne.delta.DeltaConst.F_LOCK_TICKS;
+import org.apache.jena.atlas.json.*;
+import org.apache.jena.atlas.logging.FmtLog;
+import org.apache.jena.atlas.web.HttpException;
+import org.apache.jena.riot.web.HttpOp;
+import org.apache.jena.web.HttpSC;
+import org.seaborne.delta.*;
+import org.seaborne.delta.lib.JSONX;
+import org.seaborne.delta.link.DeltaLink;
+import org.seaborne.delta.link.DeltaLinkListener;
+import org.seaborne.delta.link.DeltaNotConnectedException;
+import org.seaborne.patch.RDFPatch;
+import org.seaborne.patch.changes.RDFChangesCollector;
+import org.seaborne.patch.text.RDFPatchReaderText;
 
-import java.io.InputStream ;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
-import java.util.function.Supplier ;
 import java.util.stream.Collectors;
 
-import org.apache.jena.atlas.json.*;
-import org.apache.jena.atlas.logging.FmtLog ;
-import org.apache.jena.atlas.web.HttpException ;
-import org.apache.jena.riot.web.HttpOp ;
-import org.apache.jena.web.HttpSC ;
-import org.seaborne.delta.*;
-import org.seaborne.delta.lib.JSONX;
-import org.seaborne.delta.link.DeltaLink;
-import org.seaborne.delta.link.DeltaLinkListener;
-import org.seaborne.delta.link.DeltaNotConnectedException ;
-import org.seaborne.patch.RDFPatch ;
-import org.seaborne.patch.changes.RDFChangesCollector ;
-import org.seaborne.patch.text.RDFPatchReaderText ;
+import static org.seaborne.delta.DeltaConst.*;
 
 /**
  * Implementation of {@link DeltaLink} that encodes operations
@@ -108,22 +103,6 @@ public class DeltaLinkHTTP implements DeltaLink {
 
     // With backoff.
 
-    // Like Callable but no Exception.
-    interface Action<T> { T action() ; }
-
-    /** Perform a retryable operation. Retry only happen if HttpException happens. */
-    private <T> T retry(Action<T> callable, Supplier<String> failureMsg) {
-        try {
-            return callable.action();
-        } catch (HttpException ex) {
-            if ( failureMsg != null )
-                // Other...
-                Delta.DELTA_HTTP_LOG.warn(failureMsg.get());
-            throw ex;
-        }
-        // Any other exception - don't retry.
-    }
-
     private RDFChangesHTTP createRDFChanges(Id dsRef) {
         Objects.requireNonNull(dsRef);
         checkLink();
@@ -138,18 +117,23 @@ public class DeltaLinkHTTP implements DeltaLink {
     @Override
     public Version append(Id dsRef, RDFPatch patch) {
         checkLink();
-
-        String str = retry(()->{
-                            RDFChangesHTTP remote = createRDFChanges(dsRef);
-                            // [NET] Network point
-                            // If not re-applicable, we need a copy.
-                            patch.apply(remote);
-                            return remote.getResponse();
-                        },
-                ()->"Failed to append patch : "+dsRef);
-        if ( str != null ) {
+        final String result;
+        try {
+            RDFChangesHTTP remote = createRDFChanges(dsRef);
+            // [NET] Network point
+            // If not re-applicable, we need a copy.
+            patch.apply(remote);
+            result = remote.getResponse();
+        } catch (final HttpException e) {
+            Delta.DELTA_HTTP_LOG.warn("Failed to append patch : {}", dsRef);
+            throw e;
+        }
+        // Any other exception - don't retry.
+        // [NET] Network point
+        // If not re-applicable, we need a copy.
+        if ( result != null ) {
             try {
-                JsonObject obj = JSON.parse(str);
+                JsonObject obj = JSON.parse(result);
                 Version version = Version.fromJson(obj, DeltaConst.F_VERSION);
                 event(listener->listener.append(dsRef, version, patch));
                 return version;
@@ -188,16 +172,21 @@ public class DeltaLinkHTTP implements DeltaLink {
         url = appendURL(url, paramStr);
         final String s = url;
         try {
-            return retry(()->{
+            // [NET] Network point
+            try {
                 // [NET] Network point
-                InputStream in = HttpOp.execHttpGet(s) ;
-                if ( in == null )
-                    return null ;
-                RDFPatchReaderText pr = new RDFPatchReaderText(in) ;
+                InputStream in = HttpOp.execHttpGet(s);
+                if (in == null)
+                    return null;
+                RDFPatchReaderText pr = new RDFPatchReaderText(in);
                 RDFChangesCollector collector = new RDFChangesCollector();
                 pr.apply(collector);
                 return collector.getRDFPatch();
-            }, ()->"Failed to fetch patch.");
+            } catch (final HttpException ex) {
+                Delta.DELTA_HTTP_LOG.warn("Failed to fetch patch.");
+                throw ex;
+            }
+            // Any other exception - don't retry.
         }
         catch ( HttpException ex) {
             if ( ex.getStatusCode() == HttpSC.NOT_FOUND_404 ) {
@@ -455,9 +444,13 @@ public class DeltaLinkHTTP implements DeltaLink {
     private JsonValue rpcToValue(String opName, JsonObject arg) {
         JsonObject argx = ( arg == null ) ? emptyObject : arg;
         // [NET] Network point
-        return retry(()->DRPC.rpc(remoteServer + DeltaConst.EP_RPC, opName, argx),
-                ()->format("Failed : %s %s",opName,JSON.toStringFlat(argx))
-                     );
+        try {
+            return DRPC.rpc(remoteServer + DeltaConst.EP_RPC, opName, argx);
+        } catch (HttpException ex) {
+            Delta.DELTA_HTTP_LOG.warn("Failed : {} {}", opName, JSON.toStringFlat(argx));
+            throw ex;
+        }
+        // Any other exception - don't retry.
     }
 
     /** Perform an RPC, once - no retries, no logging. */
