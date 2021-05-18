@@ -10,7 +10,7 @@ dependencies {
     implementation(project(":rdf-patch"))
     implementation(project(":rdf-delta-base"))
     implementation(project(":rdf-delta-client"))    
-    implementation("org.apache.jena:jena-fuseki-main:3.17.0")
+    implementation("org.apache.jena:jena-fuseki-main:4.0.0")
 }
 
 description = "RDF Delta :: Apache Jena Fuseki Integration"
