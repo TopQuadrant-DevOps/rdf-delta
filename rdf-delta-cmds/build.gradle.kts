@@ -18,7 +18,7 @@ dependencies {
     implementation(project(":rdf-delta-server-http"))
     implementation(project(":rdf-delta-server-extra"))
     implementation(project(":rdf-delta-fuseki"))
-    implementation("org.apache.jena:jena-text:3.17.0")
+    implementation("org.apache.jena:jena-text:4.0.0")
     implementation("org.apache.jena:jena-fuseki-main:3.17.0")
     implementation("org.apache.curator:curator-test:5.1.0")
     testImplementation("io.findify:s3mock_2.12:0.2.6")
