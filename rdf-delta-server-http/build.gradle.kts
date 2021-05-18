@@ -7,7 +7,7 @@ plugins {
 }
 
 dependencies {
-    implementation("org.apache.jena:jena-cmds:3.17.0")
+    implementation("org.apache.jena:jena-cmds:4.0.0")
     implementation(project(":rdf-patch"))
     implementation(project(":rdf-delta-base"))
     implementation(project(":rdf-delta-server-local"))
