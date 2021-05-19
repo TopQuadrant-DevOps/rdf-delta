@@ -15,7 +15,7 @@ dependencies {
     implementation("org.apache.jena:jena-fuseki-main:${project.property("ver.jena")}")
     implementation("io.micrometer:micrometer-core:${project.property("ver.micrometer")}")
     implementation("io.micrometer:micrometer-registry-prometheus:${project.property("ver.micrometer")}")
-    implementation("org.eclipse.jetty:jetty-xml:9.4.38.v20210224")
+    implementation("org.eclipse.jetty:jetty-xml:11.0.2")
     testImplementation("org.slf4j:slf4j-jdk14:${project.property("ver.slf4j")}")
 }
 
