@@ -130,14 +130,13 @@ public final class ValidatedZooKeeperProvider implements ZooKeeperProvider, Watc
                     case ConnectedReadOnly:
                         if (this.connectedSignal.getNumberWaiting() == 1) {
                             try {
-                                try {
-                                    this.connectedSignal.await();
-                                } catch (final BrokenBarrierException e) {
-                                    LOG.error("Lost the race.", e);
-                                }
+                                this.connectedSignal.await();
                             } catch (final InterruptedException e) {
                                 LOG.error("The unthinkable has happened.", e);
+                                Thread.currentThread().interrupt();
                                 throw new IllegalStateException(e);
+                            } catch (final BrokenBarrierException e) {
+                                LOG.debug("A race condition prevented this event from propagating normally.");
                             }
                         }
                 }
@@ -163,6 +162,9 @@ public final class ValidatedZooKeeperProvider implements ZooKeeperProvider, Watc
                         try {
                             this.connectedSignal.await(3, TimeUnit.SECONDS);
                         } catch (final TimeoutException ignored) {
+                            this.connectedSignal.reset();
+                        } catch (final BrokenBarrierException e) {
+                            LOG.debug("A race condition prevented validation.");
                             this.connectedSignal.reset();
                         }
                         break;
@@ -192,7 +194,7 @@ public final class ValidatedZooKeeperProvider implements ZooKeeperProvider, Watc
                 }
             }
             return this.zooKeeper;
-        } catch (final InterruptedException | BrokenBarrierException e) {
+        } catch (final InterruptedException e) {
             throw new ZkException("Interrupted while attempting to connect to the ZooKeeper Ensemble.", e);
         }
     }
