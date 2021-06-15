@@ -132,7 +132,6 @@ public final class ValidatedZooKeeperProvider implements ZooKeeperProvider, Watc
                             try {
                                 this.connectedSignal.await();
                             } catch (final InterruptedException e) {
-                                Thread.currentThread().interrupt();
                                 throw new IllegalStateException("The unthinkable has happened", e);
                             } catch (final BrokenBarrierException e) {
                                 LOG.debug("A race condition prevented this event from propagating normally.");
