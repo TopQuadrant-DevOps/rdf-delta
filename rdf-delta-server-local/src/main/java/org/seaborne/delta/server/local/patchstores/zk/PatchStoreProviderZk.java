@@ -25,7 +25,7 @@ import org.seaborne.delta.server.local.DPS;
 import org.seaborne.delta.server.local.LocalServerConfig;
 import org.seaborne.delta.server.local.PatchStore;
 import org.seaborne.delta.server.local.PatchStoreProvider;
-import org.seaborne.delta.zk.ExponentialBackoffZkConnection;
+import org.seaborne.delta.zk.ExponentialRetryZkConnection;
 import org.seaborne.delta.zk.UncheckedZkConnection;
 import org.seaborne.delta.zk.ZkException;
 import org.seaborne.delta.zk.WrappedUncheckedZkConnection;
@@ -53,7 +53,7 @@ public class PatchStoreProviderZk implements PatchStoreProvider {
             Log.error(this, "No connection string in configuration");
         try {
             return new WrappedUncheckedZkConnection(
-                new ExponentialBackoffZkConnection(
+                new ExponentialRetryZkConnection(
                     DirectZkConnection.connect(connectionString),
                     5
                 )
