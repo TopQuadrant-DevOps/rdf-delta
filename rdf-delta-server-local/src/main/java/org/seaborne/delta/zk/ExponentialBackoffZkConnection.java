@@ -1,12 +1,11 @@
 package org.seaborne.delta.zk;
 
+import java.util.List;
+import java.util.function.Supplier;
 import org.apache.jena.atlas.json.JsonObject;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
-
-import java.util.List;
-import java.util.function.Supplier;
 
 public final class ExponentialBackoffZkConnection implements ZkConnection {
     private final ZkConnection connection;
@@ -29,27 +28,29 @@ public final class ExponentialBackoffZkConnection implements ZkConnection {
 
     private <T> T retry(final ZkMethod<T> method) throws Exception {
         T result = null;
-        var i = 0;
+        var counter = 1;
         while (result == null) {
             try {
                 result = method.evaluate();
             } catch (final KeeperException e) {
-                if (i == this.retries) {
+                if (counter == this.retries) {
                     throw e;
                 } else {
-                    Thread.sleep((long) Math.pow(2, i));
+                    Thread.sleep((long) Math.pow(2, counter));
                 }
             }
-            i++;
+            counter++;
         }
         return result;
     }
 
     private void retry(final ZkProc method) throws Exception {
+        // @checkstyle OneStatementPerLineCheck 1 lines
         retry(() -> { method.evaluate(); return 0; });
     }
 
     private void uncheckedRetry(final Runnable method) {
+        // @checkstyle OneStatementPerLineCheck 1 lines
         uncheckedRetry(() -> { method.run(); return 0; });
     }
 

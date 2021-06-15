@@ -134,6 +134,7 @@ public final class ValidatedZooKeeperProvider implements ZooKeeperProvider, Watc
                             } catch (final InterruptedException e) {
                                 throw new IllegalStateException("The unthinkable has happened", e);
                             } catch (final BrokenBarrierException e) {
+                                // @checkstyle LineLength 1 lines
                                 LOG.debug("A race condition prevented this event from propagating normally.");
                             }
                         }
