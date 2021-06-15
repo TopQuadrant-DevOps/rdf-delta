@@ -76,7 +76,15 @@ public final class DirectZkConnection implements ZkConnection {
     @Override
     public boolean pathExists(final String path) throws KeeperException, InterruptedException {
         LOG.debug("Checking if {} exists.", path);
-        return this.client.zooKeeper().exists(path, false) != null;
+        boolean result = false;
+        for (var i = 0; i < 5; i++) {
+            try {
+                result = this.client.zooKeeper().exists(path, false) != null;
+            } catch (final KeeperException.ConnectionLossException e) {
+                Thread.sleep((long) Math.pow(2, i));
+            }
+        }
+        return result;
     }
 
     @Override
