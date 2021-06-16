@@ -18,7 +18,7 @@ RUN adduser -D rdfdelta
 
 ADD --chown=rdfdelta:rdfdelta rdf-delta-${version}.tar /opt
 
+USER rdfdelta:rdfdelta
 ENV DELTA_HOME=/opt/rdf-delta-${version}
-
 ENTRYPOINT [ "/opt/rdf-delta-${version}/dcmd" ]
 CMD [ "server", "-mem" ]
