@@ -131,9 +131,11 @@ public final class ValidatedZooKeeperProvider implements ZooKeeperProvider, Watc
                         if (this.connectedSignal.getNumberWaiting() == 1) {
                             try {
                                 this.connectedSignal.await();
-                            } catch (final InterruptedException | BrokenBarrierException e) {
-                                LOG.error("The unthinkable has happened.", e);
-                                throw new IllegalStateException(e);
+                            } catch (final InterruptedException e) {
+                                throw new IllegalStateException("The unthinkable has happened", e);
+                            } catch (final BrokenBarrierException e) {
+                                // @checkstyle LineLength 1 lines
+                                LOG.debug("A race condition prevented this event from propagating normally.");
                             }
                         }
                 }
@@ -158,7 +160,12 @@ public final class ValidatedZooKeeperProvider implements ZooKeeperProvider, Watc
                         LOG.info("Waiting until connected...");
                         try {
                             this.connectedSignal.await(3, TimeUnit.SECONDS);
-                        } catch (final TimeoutException ignored) { }
+                        } catch (final TimeoutException ignored) {
+                            this.connectedSignal.reset();
+                        } catch (final BrokenBarrierException e) {
+                            LOG.debug("A race condition prevented validation.");
+                            this.connectedSignal.reset();
+                        }
                         break;
                     case AUTH_FAILED:
                         // No point in retrying
@@ -186,7 +193,7 @@ public final class ValidatedZooKeeperProvider implements ZooKeeperProvider, Watc
                 }
             }
             return this.zooKeeper;
-        } catch (final InterruptedException | BrokenBarrierException e) {
+        } catch (final InterruptedException e) {
             throw new ZkException("Interrupted while attempting to connect to the ZooKeeper Ensemble.", e);
         }
     }
