@@ -21,7 +21,6 @@ package org.seaborne.delta;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.seaborne.delta.link.DeltaLink;
-import org.seaborne.delta.server.http.DeltaServer;
 import org.seaborne.delta.systemtest.Matrix;
 
 import java.io.IOException;
@@ -30,7 +29,6 @@ public class TestDeltaLogLockZk extends AbstractTestDeltaLogLock {
 
     static { TC_DeltaIntegration.setForTesting(); }
 
-    private static DeltaServer deltaServer;
     private static DeltaLink dLink;
 
     @BeforeClass

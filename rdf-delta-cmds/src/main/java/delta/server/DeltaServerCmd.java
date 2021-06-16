@@ -51,36 +51,32 @@ public class DeltaServerCmd {
 
     static { DeltaLogging.setLogging(true); }
 
-    private static Logger LOG = Delta.DELTA_LOG;
+    private static final Logger LOG = Delta.DELTA_LOG;
 
-    private static ArgDecl argHelp              = new ArgDecl(false, "help", "h");
-    private static ArgDecl argVerbose           = new ArgDecl(false, "verbose", "v");
-    //private static ArgDecl argVersion    = new ArgDecl(false, "version");
-    private static ArgDecl argPort              = new ArgDecl(true, "port");
+    private static final ArgDecl argHelp              = new ArgDecl(false, "help", "h");
+    private static final ArgDecl argVerbose           = new ArgDecl(false, "verbose", "v");
+    private static final ArgDecl argPort              = new ArgDecl(true, "port");
 
-    private static ArgDecl argBase              = new ArgDecl(true,  "base");
+    private static final ArgDecl argBase              = new ArgDecl(true,  "base");
     // Specific choices
-    private static ArgDecl argFile              = new ArgDecl(false, "file");
-    private static ArgDecl argRocks             = new ArgDecl(false, "rocks", "rocksdb", "rocksDB");
+    private static final ArgDecl argFile              = new ArgDecl(false, "file");
+    private static final ArgDecl argRocks             = new ArgDecl(false, "rocks", "rocksdb", "rocksDB");
 
-    private static ArgDecl argMem               = new ArgDecl(false, "mem");
-    private static ArgDecl argStore             = new ArgDecl(true, "store", "rdb");
-    private static ArgDecl argZk                = new ArgDecl(true, "zk");
-    private static ArgDecl argZkPort            = new ArgDecl(true, "zkPort", "zkport");
-    private static ArgDecl argZkData            = new ArgDecl(true, "zkData", "zkdata");
-    private static ArgDecl argZkConf            = new ArgDecl(true, "zkCfg", "zkcfg", "zkConf", "zkconf");
+    private static final ArgDecl argMem               = new ArgDecl(false, "mem");
+    private static final ArgDecl argStore             = new ArgDecl(true, "store", "rdb");
+    private static final ArgDecl argZk                = new ArgDecl(true, "zk");
+    private static final ArgDecl argZkPort            = new ArgDecl(true, "zkPort", "zkport");
+    private static final ArgDecl argZkData            = new ArgDecl(true, "zkData", "zkdata");
+    private static final ArgDecl argZkConf            = new ArgDecl(true, "zkCfg", "zkcfg", "zkConf", "zkconf");
 
-    private static ArgDecl argS3Bucket          = new ArgDecl(true, "s3bucket");
-    private static ArgDecl argS3Region          = new ArgDecl(true, "s3region");
-    private static ArgDecl argS3KeysFile        = new ArgDecl(true, "s3keys");
-    private static ArgDecl argS3KeysProfile     = new ArgDecl(true, "s3profile");
+    private static final ArgDecl argS3Bucket          = new ArgDecl(true, "s3bucket");
+    private static final ArgDecl argS3Region          = new ArgDecl(true, "s3region");
+    private static final ArgDecl argS3KeysFile        = new ArgDecl(true, "s3keys");
+    private static final ArgDecl argS3KeysProfile     = new ArgDecl(true, "s3profile");
     // Allow alternative endpoints (e.g. a mock S3 store)
-    private static ArgDecl argS3Endpoint        = new ArgDecl(true, "s3endpoint");
+    private static final ArgDecl argS3Endpoint        = new ArgDecl(true, "s3endpoint");
 
-    private static ArgDecl argJetty             = new ArgDecl(true, "jetty");
-
-//    private static ArgDecl argProvider = new ArgDecl(true, "provider");
-//    private static ArgDecl argConf = new ArgDecl(true, "conf", "config");
+    private static final ArgDecl argJetty             = new ArgDecl(true, "jetty");
 
     // Switch for command line testing to be able to run the server,
     // know it has started on return, and it is not blocking.
@@ -113,20 +109,6 @@ public class DeltaServerCmd {
     public static DeltaServer server(String...args) {
         try {
             DeltaServerConfig deltaServerConfig = config(args);
-
-//            if ( false ){
-//                ByteArrayOutputStream out = new ByteArrayOutputStream();
-//                DeltaServerConfig.writeJSON(deltaServerConfig, out);
-//                ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
-//                DeltaServerConfig deltaServerConfig2 = DeltaServerConfig.read(in);
-//                boolean b = Objects.equals(deltaServerConfig, deltaServerConfig2);
-//                if ( !b ) {
-//                    System.err.println("Different round-trip configurations: ");
-//                    DeltaServerConfig.writeJSON(deltaServerConfig, System.err);
-//                    DeltaServerConfig.writeJSON(deltaServerConfig2, System.err);
-//                }
-//            }
-
             DeltaServer deltaServer = ServerBuildLib.build(deltaServerConfig);
             return deltaServer;
         }  catch (DeltaConfigException ex) {
@@ -210,12 +192,6 @@ public class DeltaServerCmd {
             System.err.println(msg);
             throw new TerminationException(0);
         }
-
-//        String configFile = null;
-//        if ( cla.contains(argConf) )
-//            configFile = cla.getArg(argConf).getValue();
-//        else
-//            configFile = getenv(DeltaConst.ENV_CONFIG);
 
         // ---- Local server provider choices.
 
@@ -497,12 +473,4 @@ public class DeltaServerCmd {
             @Override public Throwable fillInStackTrace() { return this ; }
         };
     }
-
-//    private static void cmdLineError(String fmt, Object...args) {
-//        if ( ! fmt.endsWith("\n") )
-//            fmt = fmt.trim();
-//        String msg = String.format(fmt, args);
-//        System.err.printf(msg+"\n", args);
-//        System.exit(1);
-//    }
 }
