@@ -40,12 +40,12 @@ public final class ExponentialRetryZkConnection implements ZkConnection {
     }
 
     @FunctionalInterface
-    private interface ZkMethod<T> {
+    private interface Method<T> {
         T evaluate() throws Exception;
     }
 
     @FunctionalInterface
-    private interface ZkProc {
+    private interface Proc {
         void evaluate() throws Exception;
     }
 
@@ -63,7 +63,7 @@ public final class ExponentialRetryZkConnection implements ZkConnection {
      * @return The result of the method invocation
      * @throws Exception If the method never succeeds
      */
-    private <T> T retry(final ZkMethod<T> method) throws Exception {
+    private <T> T retry(final Method<T> method) throws Exception {
         T result = null;
         var counter = 1;
         while (result == null) {
@@ -81,25 +81,13 @@ public final class ExponentialRetryZkConnection implements ZkConnection {
         return result;
     }
 
-    private void retry(final ZkProc method) throws Exception {
-        // @checkstyle OneStatementPerLineCheck 1 lines
-        retry(() -> { method.evaluate(); return 0; });
-    }
-
-    private void uncheckedRetry(final Runnable method) {
-        // @checkstyle OneStatementPerLineCheck 1 lines
-        uncheckedRetry(() -> { method.run(); return 0; });
-    }
-
-    private <T> T uncheckedRetry(final Supplier<T> method) {
-        try {
-            return retry(method::get);
-        } catch(final RuntimeException e) {
-            throw e;
-        } catch (final Exception e) {
-            // None expected, however, if one is received:
-            throw new RuntimeException(e);
-        }
+    private void retry(final Proc method) throws Exception {
+        retry(
+            () -> {
+                method.evaluate();
+                return 0;
+            }
+        );
     }
 
     @Override
@@ -179,13 +167,11 @@ public final class ExponentialRetryZkConnection implements ZkConnection {
 
     @Override
     public void runWithLock(final String path, final Runnable action) {
-//        uncheckedRetry(() -> connection.runWithLock(path, action));
         connection.runWithLock(path, action);
     }
 
     @Override
     public <X> X runWithLock(final String path, final Supplier<X> action) {
-//        return uncheckedRetry(() -> connection.runWithLock(path, action));
         return connection.runWithLock(path, action);
     }
 

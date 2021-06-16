@@ -12,10 +12,13 @@
 
 # See the NOTICE file distributed with this work for additional
 # information regarding copyright ownership.
-FROM ubuntu:20.04
+FROM azul/zulu-openjdk-alpine:11-jre
 
-RUN apt-get update; apt-get install -y openjdk-11-jre-headless; apt-get clean
-ADD rdf-delta-${version}.tar /opt
+RUN adduser -D rdfdelta
+
+ADD --chown=rdfdelta:rdfdelta rdf-delta-${version}.tar /opt
+
 ENV DELTA_HOME=/opt/rdf-delta-${version}
+
 ENTRYPOINT [ "/opt/rdf-delta-${version}/dcmd" ]
 CMD [ "server", "-mem" ]
