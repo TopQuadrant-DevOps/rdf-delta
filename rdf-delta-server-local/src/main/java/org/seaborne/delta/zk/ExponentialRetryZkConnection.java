@@ -179,12 +179,14 @@ public final class ExponentialRetryZkConnection implements ZkConnection {
 
     @Override
     public void runWithLock(final String path, final Runnable action) {
-        uncheckedRetry(() -> connection.runWithLock(path, action));
+//        uncheckedRetry(() -> connection.runWithLock(path, action));
+        connection.runWithLock(path, action);
     }
 
     @Override
     public <X> X runWithLock(final String path, final Supplier<X> action) {
-        return uncheckedRetry(() -> connection.runWithLock(path, action));
+//        return uncheckedRetry(() -> connection.runWithLock(path, action));
+        return connection.runWithLock(path, action);
     }
 
     @Override

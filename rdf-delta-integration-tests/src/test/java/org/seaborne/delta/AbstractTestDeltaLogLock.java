@@ -33,7 +33,7 @@ public abstract class AbstractTestDeltaLogLock {
     abstract protected DeltaLink getDLink();
     protected static Id dsRef;
 
-    private static boolean VERBOSE = false;
+    private static final boolean VERBOSE = false;
 
     @Test public void testAcquireLock() {
         if ( VERBOSE ) {
