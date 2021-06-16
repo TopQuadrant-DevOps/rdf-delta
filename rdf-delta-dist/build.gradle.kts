@@ -29,11 +29,11 @@ tasks.register<Tar>("packageDistribution") {
     from("README")
     with(copySpec {
         from(tasks.getByPath(":rdf-delta-server:shadowJar"))
-        rename({ name -> "delta-server.jar" })
+        rename { "delta-server.jar" }
     })
     with(copySpec {
         from(tasks.getByPath(":rdf-delta-fuseki-server:shadowJar"))
-        rename({name -> "delta-fuseki.jar" })
+        rename { "delta-fuseki.jar" }
     })
     with(copySpec {
         from(project.file("../rdf-delta-examples/Tutorial"))
