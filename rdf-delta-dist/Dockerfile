@@ -14,6 +14,8 @@
 # information regarding copyright ownership.
 FROM azul/zulu-openjdk-alpine:11-jre
 
+RUN apk update; apk upgrade
+
 RUN adduser -D rdfdelta
 
 ADD --chown=rdfdelta:rdfdelta rdf-delta-${version}.tar /opt
