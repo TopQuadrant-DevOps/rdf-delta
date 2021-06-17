@@ -14,7 +14,7 @@
 # information regarding copyright ownership.
 FROM azul/zulu-openjdk-alpine:11-jre
 
-RUN apk update; apk upgrade
+RUN apk update; apk upgrade; apk add bash
 
 RUN adduser -D rdfdelta
 
