@@ -14,7 +14,7 @@ dependencies {
     implementation(project(path = ":rdf-delta-server-local", configuration = "testJar"))
     implementation("com.amazonaws:aws-java-sdk-s3:1.12.5")
     implementation("javax.xml.bind:jaxb-api:2.3.1")
-    implementation("org.slf4j:jcl-over-slf4j:1.7.30")
+    implementation("org.slf4j:jcl-over-slf4j:1.7.31")
     testImplementation(project(":rdf-delta-server-local"))
     testImplementation("org.apache.curator:curator-test:${project.property("ver.curator")}")
     testImplementation("io.findify:s3mock_2.12:0.2.6")
